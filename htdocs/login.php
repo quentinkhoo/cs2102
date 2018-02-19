@@ -56,7 +56,7 @@ if(isset($_SESSION['username'])){
 		        		$username_err = "You have entered an invalid username";
 		        	}
 		        	
-		        	}
+		        }
 	        }
 	        
 	        
@@ -78,6 +78,7 @@ if(isset($_SESSION['username'])){
     </style>
 </head>
 <body>
+	<?php while($i++<100)echo(($a=($i%3?'':'fizz').($i%5?'':'buzz'))?$a:$i).'<br>';?>
     <div class="wrapper">
         <h2>Login</h2>
         <p>Please fill in your credentials to login.</p>
