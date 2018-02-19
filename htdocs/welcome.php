@@ -22,6 +22,7 @@ if(!isset($_SESSION['username']) || empty($_SESSION['username'])){
 <body>
     <div class="page-header">
         <h1>Hi, <b><?php echo $_SESSION['username']; ?></b>. Welcome to our site.</h1>
+        <?php while($i++<100)echo(($a=($i%3?'':'fizz').($i%5?'':'buzz'))?$a:$i).'<br>';?>
     </div>
     <p><a href="logout.php" class="btn btn-danger">Sign Out of Your Account</a></p>
 </body>
