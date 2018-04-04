@@ -32,7 +32,7 @@ if(isset($_SESSION['username'])){
 	    
 	    // Validate credentials
 	    if(empty($username_err) && empty($password_err)){
-	    	$get_user_record = "SELECT username, password FROM users WHERE username = $1";
+	    	$get_user_record = "SELECT username, password, userid FROM person WHERE username = $1";
 	    	$prepare_login = pg_prepare($db, "", $get_user_record);
 	        if ($prepare_login) {
 	        	$execute_login = pg_execute($db, "", array($username));
@@ -48,6 +48,7 @@ if(isset($_SESSION['username'])){
 			        	if (password_verify($password, $hashed_password)) {
 			    			session_start();
 			    			$_SESSION['username'] = $username;
+			    			$_SESSION['userid'] = $user_details[userid];
 			    			header("location: welcome.php");
 			        	} else {
 			        		$password_err = "You have entered an invalid password";
@@ -56,7 +57,7 @@ if(isset($_SESSION['username'])){
 		        		$username_err = "You have entered an invalid username";
 		        	}
 		        	
-		        	}
+		        }
 	        }
 	        
 	        
