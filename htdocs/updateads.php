@@ -9,12 +9,13 @@ session_start();
 date_default_timezone_set('Asia/Singapore');
  
 // If session variable is not set it will redirect to login page
-if(!isset($_SESSION['username']) || empty($_SESSION['username'])){
+if(!isset($_SESSION['userid']) || empty($_SESSION['userid'])){
   header("location: login.php");
   exit;
 } else {
-	$user_bids_err = $bids_err = "";
-	$get_user_bid_records = "SELECT origin, dest, pickuptime, minbid, fullname, username, bidamt, phone, status FROM bid INNER JOIN person ON bidderid = userid NATURAL JOIN ride WHERE advertiserid = $1 ";
+	$user_bids_err = $rides_err = "";
+	$get_user_bid_records = "SELECT origin, dest, pickuptime, minbid, fullname, username, bidamt, phone, status FROM bid INNER JOIN person ON bidderid = userid NATURAL JOIN ride WHERE advertiserid = $1 ORDER BY 
+		pickuptime ASC, origin, dest";
 	$prepare_user_bids = pg_prepare($db, "", $get_user_bid_records);
 	
     if ($prepare_user_bids) {
@@ -24,12 +25,54 @@ if(!isset($_SESSION['username']) || empty($_SESSION['username'])){
 		} else {
 			$num_rows = pg_num_rows($execute_user_bids);
 			if ($num_rows == 0) {
-				$bids_err = "There are no rides available.";
+				$user_bids_err = "There are no rides available.";
 			}				
 		}
 	}
 	else {
 		$user_bids_err = "SQL statement cannot be prepared :(";
+	}
+
+	$get_rides = "SELECT advertiserid, origin, dest, pickuptime, username, status FROM ride left join person on
+	winnerid = userid where advertiserid = $1 ORDER BY status DESC" ;
+	$prepare_user_rides = pg_prepare($db, "", $get_rides);
+	
+    if ($prepare_user_rides) {
+		$execute_user_rides = pg_execute($db, "", array($_SESSION['userid']));
+		if (!$execute_user_rides) {
+			$rides_err = "Something went wrong! Please try again.";
+		} else {
+			$num_rides_rows = pg_num_rows($execute_user_bids);
+			if ($num_rows == 0) {
+				$user_bids_err = "There are no rides available.";
+			}				
+		}
+	}
+	else {
+		$user_bids_err = "SQL statement cannot be prepared :(";
+	}
+
+	if($_SERVER["REQUEST_METHOD"] == "POST") {
+		$origin = $_POST['origin'];
+		$dest = $_POST['dest'];
+		$pickuptime = $_POST['pickuptime'];
+		$advertiserid = $_POST['advertiserid'];
+
+		$sql_update_winner = "UPDATE ride SET status = 'close', winnerid = (select bidderid from bid where advertiserid = $1 and origin = $2 and dest = $3 and pickuptime = $4 and bidamt >= (select max(bidamt) from bid where advertiserid = $1 and origin = $2 and dest = $3 and pickuptime = $4) limit 1) 
+		WHERE origin = $2 and dest = $3 and pickuptime = $4 and advertiserid = $1";
+		$prepare_update_winner = pg_prepare($db, "", $sql_update_winner);
+
+		if ($prepare_update_winner) {
+			$execute_update_winner = pg_execute($db, "", array($advertiserid, $origin, $dest, $pickuptime));
+
+			if ($execute_update_winner) {
+				echo header("location: updateads.php");
+			} else {
+				echo "Failed to update";
+			}
+		} else {
+			echo "Failed to prepare!";
+		}
 	}
 	
 }
@@ -85,6 +128,39 @@ if(!isset($_SESSION['username']) || empty($_SESSION['username'])){
 <body>
 
 <h2>Your Advertisements</h2>
+
+<table id = "t01" align ="center">
+  <tr>
+    <th>Origin</th>
+    <th>Destination</th>
+    <th>Pickup Time</th>
+    <th>Status</th>
+    <th>Winner</th>
+    <th>Choose For Me</th>
+  </tr>
+  <?php echo (!empty($rides_err)) ? $rides_err : ''; ?>
+  <?php while($row = pg_fetch_assoc($execute_user_rides)) { ?>
+  <tr>
+    <td><?php echo $row[origin]; ?></td>
+    <td><?php echo $row[dest]; ?></td>
+    <td><?php echo $row[pickuptime]; ?></td>
+    <td><?php echo $row[status]; ?></td>
+    <td><?php echo $row[username]; ?></td>
+    <td><?php echo ($row[status] == 'open') ? 
+    '<form action="" method="post">'
+    .'<input name="origin" type="hidden" value="'.$row[origin].'" />'
+    .'<input name="dest" type="hidden" value="'.$row[dest].'" />'
+    .'<input name="pickuptime" type="hidden" value="'.$row[pickuptime].'" />'
+    .'<input name="advertiserid" type="hidden" value="'.$row[advertiserid].'" />'
+    .'<input type="submit" class="btn btn-primary" value="Automatically Choose Highest Bidder" /></form>'
+
+    : 'You have chosen a winner!'?>
+    </td>
+  </tr>
+  <?php }?>
+</table>
+
+<h2>Your Bidders</h2>
 
 <table id = "t01" align ="center">
   <tr>

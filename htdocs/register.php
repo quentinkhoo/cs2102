@@ -202,8 +202,6 @@ if($_SERVER["REQUEST_METHOD"] == "POST") {
                 $sql_usercarid = "INSERT INTO car_ownedby(ownerid, carid) VALUES($1, $2)";
                 $prepare_usercarid = pg_prepare($db, "", $sql_usercarid);
 
-                echo $userid;
-                echo $carid;
                 if ($prepare_usercarid) {
                     $execute_insert_usercarid = pg_execute($db, "", array($userid, $carid));
                     if ($execute_insert_usercarid) {
@@ -314,7 +312,6 @@ if($_SERVER["REQUEST_METHOD"] == "POST") {
                 <input type="submit" class="btn btn-primary" value="Submit">
                 <input type="reset" class="btn btn-default" value="Reset">
             </div>
-
             <p>Already have an account? <a href="login.php">Login here</a>.</p>
         </form>
     </div>    

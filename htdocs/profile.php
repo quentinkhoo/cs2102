@@ -4,29 +4,36 @@
 require_once 'config.php';
 session_start();
 
-if(!isset($_SESSION['username']) || empty($_SESSION['username'])){
+if(!isset($_SESSION['userid']) || empty($_SESSION['userid'])) {
   header("location: login.php");
   exit;
 }
  
- $result = pg_query($db, "SELECT * FROM Person WHERE username = '".$_SESSION['username']."'");
+ $result = pg_query($db, "SELECT * FROM Person WHERE userid = ".$_SESSION['userid']);
  if (!$result) {
   echo "An error occured. \n";
   exit;
  }
 
-$fullname = $email = $phone = $fullname_err= $email_err= $phone_err = $username_err ="";
+$fullname = $email = $phone = $username = $password = $confirmpassword = "";
+$fullname_err = $email_err= $phone_err = $username_err = $password_err = $confirmpassword_err = "";
 
 //fetching user's data
-$row = pg_fetch_row($result);
+$row = pg_fetch_assoc($result);
 //allocating user data in array
-$username = $row[0];
-$email = $row[2];
-$fullname = $row[3];
-$phone = $row[4];
+$username = $row[username];
+$email = $row[email];
+$fullname = $row[fullname];
+$phone = $row[phone];
 
 
 if($_SERVER["REQUEST_METHOD"] == "POST"){
+
+    if(empty(trim($_POST["username"]))){
+        $username_err = "Please enter a username. ";
+    }else{
+        $username = trim($_POST["username"]);
+    }
 
     //validate fullname
     if(empty(trim($_POST["fullname"]))){
@@ -49,13 +56,12 @@ if($_SERVER["REQUEST_METHOD"] == "POST"){
         $phone = trim($_POST["phone"]);
     }
 
-
     //update profile
     if(empty($fullname_err) && empty($email_err) && empty($phone_err)){
-        $sql_update = "UPDATE person SET fullname = $1, email = $2, phone = $3 WHERE username = $4 ";
+        $sql_update = "UPDATE person SET fullname = $1, email = $2, phone = $3, username = $4 WHERE userid = $5 ";
         $prepare_update = pg_prepare($db, "", $sql_update);
         if ($prepare_update) {
-            $execute_update = pg_execute($db, "", array($fullname, $email, $phone, $username));
+            $execute_update = pg_execute($db, "", array($fullname, $email, $phone, $username, $_SESSION['userid']));
         }
          
     }
@@ -91,8 +97,8 @@ if($_SERVER["REQUEST_METHOD"] == "POST"){
       <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
       <ul class="nav navbar-nav">
         <li class="active"><a href="welcome.php">Car Pooling <span class="sr-only">(current)</span></a></li>
-        <li><a href="#">Bid</a></li>
-        <li><a href="#">Advertisement</a></li>
+        <li><a href="updatebid.php">Bid</a></li>
+        <li><a href="updateads.php">Advertisement</a></li>
         <li class="dropdown">
           <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Dropdown <span class="caret"></span></a>
           <ul class="dropdown-menu">
@@ -118,8 +124,6 @@ if($_SERVER["REQUEST_METHOD"] == "POST"){
         <!-- SIDEBAR USER TITLE -->
         <div class="profile-usertitle">
           <div class="profile-usertitle-name">
-
-            <?php echo $_SESSION['username']; ?>
           </div>
           <div class="profile-usertitle-job">
             LEADER
@@ -146,35 +150,33 @@ if($_SERVER["REQUEST_METHOD"] == "POST"){
        <div class="profile-content" id = "profile">
           <form action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]); ?>" method="post">
 
-             <div class="form-group <?php echo (empty($fullname)) ? 'has-error' : ''; ?>">
-                <label>Full Name</label>
-                <input type="fullname" name="fullname" class="form-control" value="<?php echo $fullname; ?>">
-                <span class="help-block"><?php echo $fullname_err; ?></span>
-            </div>
-
-              <div class="form-group <?php echo (empty($email)) ? 'has-error' : ''; ?>">
-                <label>Email</label>
-                <input type="email" name="email" class="form-control" value="<?php echo $email; ?>">
-                <span class="help-block"><?php echo $email_err; ?></span>
-            </div>
-
-            <div class="form-group <?php echo (empty($phone)) ? 'has-error' : ''; ?>">
-                <label>Phone</label>
-                <input type="phone" name="phone" class="form-control" value="<?php echo $phone; ?>">
-                <span class="help-block"><?php echo $phone_err; ?></span>
-            </div>
-
-                <div class="form-group <?php echo (empty($username)) ? 'has-error' : ''; ?>">
+            <div class="form-group <?php echo (!empty($username_err)) ? 'has-error' : ''; ?>">
                 <label>Username</label>
-                <input type="fullname" name="fullname" class="form-control" value="<?php echo $username; ?>">
+                <input type="text" name="username" class="form-control" value="<?php echo $username; ?>">
                 <span class="help-block"><?php echo $username_err; ?></span>
             </div>
 
+             <div class="form-group <?php echo (!empty($fullname_err)) ? 'has-error' : ''; ?>">
+                <label>Full Name</label>
+                <input type="text" name="fullname" class="form-control" value="<?php echo $fullname; ?>">
+                <span class="help-block"><?php echo $fullname_err; ?></span>
+            </div>
 
+            <div class="form-group <?php echo (!empty($email_err)) ? 'has-error' : ''; ?>">
+                <label>Email</label>
+                <input type="text" name="email" class="form-control" value="<?php echo $email; ?>">
+                <span class="help-block"><?php echo $email_err; ?></span>
+            </div>
+
+            <div class="form-group <?php echo (!empty($phone_err)) ? 'has-error' : ''; ?>">
+                <label>Phone</label>
+                <input type="text" name="phone" class="form-control" value="<?php echo $phone; ?>">
+                <span class="help-block"><?php echo $phone_err; ?></span>
+            </div>
 
             <div class = "row">
             <div class="form-group">
-                <input type="submit" class="btn btn-primary" value="Submit">
+                <input type="submit" class="btn btn-primary" value="Update Profile">
                 <input type="reset" class="btn btn-default" value="Reset">
             </div>
 

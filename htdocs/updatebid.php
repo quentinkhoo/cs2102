@@ -9,27 +9,64 @@ session_start();
 date_default_timezone_set('Asia/Singapore');
  
 // If session variable is not set it will redirect to login page
-if(!isset($_SESSION['username']) || empty($_SESSION['username'])){
+if(!isset($_SESSION['userid']) || empty($_SESSION['userid'])){
   header("location: login.php");
   exit;
 } else {
-	$user_bids_err = $bids_err = "";
-	$get_user_bid_records = "SELECT username, phone, origin, dest, pickuptime, minbid, bidamt FROM bid INNER JOIN person ON userid = advertiserid NATURAL JOIN ride WHERE bidderid = $1 AND status = $2" ;
+	$user_bid_err = $user_bid_success = "";
+	$get_user_bid_records = "SELECT * FROM bid INNER JOIN person ON userid = advertiserid NATURAL JOIN ride WHERE bidderid = $1 AND status = $2" ;
 	$prepare_user_bids = pg_prepare($db, "", $get_user_bid_records);
 	
     if ($prepare_user_bids) {
 		$execute_user_bids = pg_execute($db, "", array($_SESSION['userid'], 'open'));
 		if (!$execute_user_bids) {
-			$user_bids_err = "Something went wrong! Please try again.";
+			$user_bid_err = "Something went wrong! Please try again.";
 		} else {
 			$num_rows = pg_num_rows($execute_user_bids);
 			if ($num_rows == 0) {
-				$bids_err = "There are no rides available.";
+				$user_bid_err = "You have not bidded for any rides!";
 			}				
 		}
 	}
 	else {
-		$user_bids_err = "SQL statement cannot be prepared :(";
+		$user_bid_err = "SQL statement cannot be prepared :(";
+	}
+
+	if($_SERVER["REQUEST_METHOD"] == "POST") {
+
+		$pickuptime = $_POST["pickuptime"];
+		$advertiserid = $_POST["advertiserid"];
+		$origin = trim($_POST["origin"]);
+		$dest = trim($_POST["dest"]);
+		$bidderid = $_SESSION["userid"];
+		$bidtime = trim($_POST["bidtime"]);
+		$usernewbid = trim($_POST["newbid"]);
+		$minbid = substr($_POST["minbid"], 1);
+
+		if (empty(trim($_POST["newbid"]))) {
+			$user_bid_err = "Please input a bid amount";
+		} else if (!is_numeric(trim($_POST['newbid']))) {
+			$user_bid_err = "Only numeric input is allowed.";
+		} else if ($usernewbid < $minbid) {
+			$user_bid_err = 'You are not bidding enough. Minimum bid is ' . trim($_POST["minbid"]);
+		} else {
+
+			$update_bid = "UPDATE bid SET bidamt = $1, bidtime = $2
+									WHERE pickuptime = $3 AND origin = $4 AND dest = $5 AND advertiserid = $6
+									AND bidderid = $7";
+			$prepare_update_bid = pg_prepare($db, "", $update_bid);
+			if ($prepare_update_bid) {
+				$execute_update_bid = pg_execute($db, "", array($usernewbid, $bidtime, $pickuptime, $origin, $dest, $advertiserid, $bidderid));
+				if ($execute_update_bid) {
+					$user_bid_success = "You have succesfully updated your bid!";
+				} else {
+					$user_bid_error = "Couldn't update bid!";
+				}
+			} else {
+				$user_bid_error = "Cannot update bid!";
+			}
+
+		}
 	}
 	
 }
@@ -84,6 +121,25 @@ if(!isset($_SESSION['username']) || empty($_SESSION['username'])){
 </head>
 <body>
 
+<nav class="navbar navbar-default">
+<div class="container-fluid">
+  <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+  <ul class="nav navbar-nav">
+    <li class="active"><a href="welcome.php">Car Pooling <span class="sr-only">(current)</span></a></li>
+    <li><a href="updatebid.php">Bid</a></li>
+    <li><a href="updateads.php">Advertisement</a></li>
+    <li class="dropdown">
+      <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Dropdown <span class="caret"></span></a>
+      <ul class="dropdown-menu">
+        <li><a href="profile.php">Profile</a></li>
+        <li><a href="logout.php">Logout</a></li>
+      </ul>
+    </li>
+  </ul>
+</div>
+</div>
+</nav>
+
 <h2>List of Bids</h2>
 
 <table id = "t01" align ="center">
@@ -96,7 +152,6 @@ if(!isset($_SESSION['username']) || empty($_SESSION['username'])){
     <th>Minimum Bid</th>
     <th>Your Bid</th>
   </tr>
-  <?php echo (!empty($user_bids_err)) ? $user_bids_err : ''; ?>
   <?php while($row = pg_fetch_assoc($execute_user_bids)) { ?>
   <tr>
     <td><?php echo $row[username]; ?></td>
@@ -105,7 +160,25 @@ if(!isset($_SESSION['username']) || empty($_SESSION['username'])){
     <td><?php echo $row[dest]; ?></td>
     <td><?php echo $row[pickuptime]; ?></td>
     <td><?php echo $row[minbid]; ?></td>
-    <td><?php echo $row[bidamt]; ?></td>
+    <?php $bidamt = substr($row[bidamt], 1);?>
+    <td>
+		<form action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]); ?>" method="post">
+			<div class="form-group <?php echo (!empty($user_bid_err) && $row[advertiserid] == $advertiserid && $row[pickuptime] == $pickuptime && $row[origin] == $origin && $row[dest] == $dest) ? 'has-error' : ''; ?>">					
+				<input type="submit" value="Update Bid" class="btn btn-primary" style="float: right" />
+					<div style="overflow: hidden; padding-right: .25em;">
+					<input type="number" name="newbid" value="<?php echo (!empty($user_bid_success && $row[advertiserid] == $advertiserid && $row[pickuptime] == $pickuptime && $row[origin] == $origin && $row[dest] == $dest) ? $usernewbid : $bidamt); ?>" class="form-control" style="width: 100%;" step="0.01" data-number-to-fixed="2" data-number-stepfactor="100"/>
+					<span class="help-block"><?php echo ($row[advertiserid] == $advertiserid && $row[pickuptime] == $pickuptime && $row[origin] == $origin && $row[dest] == $dest) ? $user_bid_err.$user_bid_success : ""; ?></span>
+					</div>
+			</div>
+			<input name="origin" type="hidden" value="<?php echo $row[origin]; ?>" />
+			<input name="dest" type="hidden" value="<?php echo $row[dest]; ?>" />
+			<input name="pickuptime" type="hidden" value="<?php echo $row[pickuptime]; ?>" />
+			<input name="advertiserid" type="hidden" value="<?php echo $row[advertiserid]; ?>" />
+			<input name="minbid" type="hidden" value="<?php echo $row[minbid]; ?>" />
+			<input name="bidderid" type="hidden" value="<?php echo $_SESSION['userid']; ?>" />
+			<input name="bidtime" type="hidden" value="<?php echo date("Y-m-d H:i:s") ?>" />
+		</form>
+	</td>
   </tr>
   <?php }?>
 </table>

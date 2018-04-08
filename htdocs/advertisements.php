@@ -7,17 +7,21 @@ session_start();
 
 // Set the default timezone to use
 date_default_timezone_set('Asia/Singapore');
+
+$userbid = $bidtime = $bidderid = $origin = $dest = $minbid = $advertiserid = $pickuptime = "";
  
 // If session variable is not set it will redirect to login page
-if(!isset($_SESSION['username']) || empty($_SESSION['username'])){
+if(!isset($_SESSION['userid']) || empty($_SESSION['userid'])){
   header("location: login.php");
   exit;
 } else {
-	$get_adverts_record = "SELECT * FROM ride WHERE status = 'open'";
+	$get_adverts_record = "SELECT * FROM ride WHERE status = 'open' 
+							AND pickuptime > now()
+							AND advertiserid <> $1";
 	$prepare_adverts = pg_prepare($db, "", $get_adverts_record);
 	
     if ($prepare_adverts) {
-		$execute_adverts = pg_execute($db, "", array());
+		$execute_adverts = pg_execute($db, "", array($_SESSION['userid']));
 		if (!$execute_adverts) {
 			$adverts_err = "Something went wrong! Please try again.";
 		} else {
@@ -32,49 +36,42 @@ if(!isset($_SESSION['username']) || empty($_SESSION['username'])){
 	}
 	
 	if($_SERVER["REQUEST_METHOD"] == "POST") {
+
+	    $userbid = trim($_POST["bid"]);
+        $bidtime = trim($_POST["bidtime"]);
+    	$bidderid = $_SESSION["userid"];
+    	$origin = trim($_POST["origin"]);
+    	$dest = trim($_POST["dest"]);
+        $advertiserid = trim($_POST["advertiserid"]);
+        $pickuptime = trim($_POST["pickuptime"]);
+		$minbid = substr($_POST["minbid"], 1);
+
 		if(empty(trim($_POST["bid"]))) {
 	        $bids_err = 'Please enter bid.';
 	    } else if (!is_numeric(trim($_POST['bid']))) {
 	    	$bids_err = 'Only numeric input is allowed.';
-	    } else if (trim($_POST["bid"]) < substr(trim($_POST["minbid"]), 2, strlen($_POST["minbid"]) - 5)) {
-	    	$bids_err = 'Minimum bid is ' . substr(trim($_POST["minbid"]), 1);
+	    } else if ($userbid < $minbid) {
+	    	$bids_err = 'You are not bidding enough. Minimum bid is ' . trim($_POST["minbid"]);
 	    } else {
-	        $userbid = trim($_POST["bid"]);
-	        $bidTime = trim($_POST["bidtime"]);
-        	$bidID = trim($_POST["bidID"]);
-        	$bidorigin = trim($_POST["origin"]);
-        	$biddest = trim($_POST["dest"]);
-        	$minbid = trim($_POST["minbid"]);
-	    }
 
-        $adID = trim($_POST["adID"]);
-        $bidpickuptime = trim($_POST["pickuptime"]);
-		
-		$insert_bid = "INSERT INTO bid VALUES ($1,$2,$3,$4,$5,$6,$7,$8)";
-		$prepare_bid = pg_prepare($db, "", $insert_bid);
-		
-		if ($prepare_bid) {
-			$execute_bid = pg_execute($db, "", array($userbid, $bidTime, $bidID, $adID, $bidorigin, $biddest, $bidpickuptime, $minbid));
-			if (!$execute_bid) {
-				if (!$bids_err) {
-					$bids_err = "You have already bidded for this ride. Please go to 'Manage Bid' to edit your bid.";
+			$insert_bid = "INSERT INTO bid VALUES ($1,$2,$3,$4,$5,$6,$7,$8)";
+			$prepare_bid = pg_prepare($db, "", $insert_bid);
+			
+			if ($prepare_bid) {
+				$execute_bid = pg_execute($db, "", array($userbid, $bidtime, $bidderid, $advertiserid, $origin, $dest, $pickuptime, $minbid));
+				if (!$execute_bid) {
+					if (!$bids_err) {
+						$bids_err = "You have already bidded for this ride.";
+					}
+				} else {
+					$bids_success = "You have successfully bidded for this ride!";
 				}
-			} else {
-				echo "Bid Successfully!";
+			}
+			else {
+				$bids_err = "Unable to perform bid.";
 			}
 		}
-		else {
-			$bids_err = "Unable to perform bid.";
-		}
 	}
-
-	// Reset the variables
-	$userbid = "";
-	$bidorigin = "";
-	$biddest = "";
-	$minbid = "";
-	$bidID = "";
-	$bidTime = "";
 }
 ?>
  
@@ -125,21 +122,21 @@ if(!isset($_SESSION['username']) || empty($_SESSION['username'])){
 			<td><?php echo $row[dest]; ?></td>
 			<td><?php echo $row[pickuptime]; ?></td>
 			<td><?php echo $row[minbid]; ?></td>
+			<?php $minbid = substr($row[minbid], 1); ?>
 			<td>
 				<form action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]); ?>" method="post">
-					<div class="form-group <?php echo (!empty($bids_err) && $row[advertiserid] == $adID && $row[pickuptime] == $bidpickuptime) ? 'has-error' : ''; ?>">					
+					<div class="form-group <?php echo (!empty($bids_err) && $row[advertiserid] == $advertiserid && $row[pickuptime] == $pickuptime && $row[origin] == $origin && $row[dest] == $dest) ? 'has-error' : ''; ?>">					
 						<input type="submit" value="Bid" class="btn btn-primary" style="float: right" />
   						<div style="overflow: hidden; padding-right: .25em;">
-    						<input type="text" name="bid" value="" maxlength="5" length="5" class="form-control" style="width: 100%;" />
-    						<span class="help-block"><?php echo ($row[advertiserid] == $adID && $row[pickuptime] == $bidpickuptime) ? $bids_err : ""; ?></span>
+    						<input type="number" name="bid" value="<?php ""; ?>" class="form-control" style="width: 100%;" step="0.01" data-number-to-fixed="2" data-number-stepfactor="100"/>
+    						<span class="help-block"><?php echo ($row[advertiserid] == $advertiserid && $row[pickuptime] == $pickuptime && $row[origin] == $origin && $row[dest] == $dest) ? $bids_err.$bids_success : ""; ?></span>
    						</div>
 					</div>
 					<input name="origin" type="hidden" value="<?php echo $row[origin]; ?>" />
 					<input name="dest" type="hidden" value="<?php echo $row[dest]; ?>" />
 					<input name="pickuptime" type="hidden" value="<?php echo $row[pickuptime]; ?>" />
 					<input name="minbid" type="hidden" value="<?php echo $row[minbid]; ?>" />
-					<input name="adID" type="hidden" value="<?php echo $row[advertiserid]; ?>" />
-					<input name="bidID" type="hidden" value="<?php echo $_SESSION['userid']; ?>" />
+					<input name="advertiserid" type="hidden" value="<?php echo $row[advertiserid]; ?>" />
 					<input name="bidtime" type="hidden" value="<?php echo date("Y-m-d H:i:s") ?>" />
 				</form>
 			</td>

@@ -47,7 +47,6 @@ if(isset($_SESSION['username'])){
 			        	//Check if password is correct and start a new session if so
 			        	if (password_verify($password, $hashed_password)) {
 			    			session_start();
-			    			$_SESSION['username'] = $username;
 			    			$_SESSION['userid'] = $user_details[userid];
 			    			header("location: welcome.php");
 			        	} else {
