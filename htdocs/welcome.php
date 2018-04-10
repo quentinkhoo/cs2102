@@ -49,7 +49,7 @@ if(!isset($_SESSION['userid']) || empty($_SESSION['userid'])){
  <div class="jumbotron">
         <div class="container-fluid">         
         <!-- <div><img src="./img/download.jpg" alt="John" style="width:100%"></div>    -->   
-            <h2>Hi, <b><?php echo $_SESSION['username']; ?></b>. Welcome to our site.</h2>
+            <h2>Hi. Welcome to our site.</h2>
 
             <br><br>
          <div class ="wrapper">

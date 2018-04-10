@@ -162,7 +162,7 @@ if (!isset($_SESSION['userid']) || empty($_SESSION['userid'])) {
                 <input type="reset" class="btn btn-default" value="Reset">
             </div>
 
-            <p>Do not have a car registered? Register one! <a href="profile.php">Update profile here</a>.</p>
+            <p>Do not have a car registered? Register one! <a href="car.php">Register a car here</a>.</p>
 		</form>
 	</div>
 </body>
