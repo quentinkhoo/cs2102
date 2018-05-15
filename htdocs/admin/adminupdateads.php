@@ -1,6 +1,6 @@
 <?php
 // Include config file
-require_once 'config.php';
+require_once '../config.php';
 
 // Initialize the session
 session_start();
@@ -9,8 +9,9 @@ session_start();
 date_default_timezone_set('Asia/Singapore');
  
 // If session variable is not set it will redirect to login page
-if(!isset($_SESSION['userid']) || empty($_SESSION['userid'])){
-  header("location: login.php");
+if(!isset($_SESSION['userid']) || empty($_SESSION['userid']) 
+  || !isset($_SESSION['isadmin']) || empty($_SESSION['isadmin'])) {
+  header("location: ../login.php");
   exit;
 } else {
 	$user_bids_err = $rides_err = "";
@@ -228,7 +229,7 @@ if(!isset($_SESSION['userid']) || empty($_SESSION['userid'])){
 </table>
 <br>
 <br>
-<p><a href="welcome.php" class="btn btn-warning">Go Back</a></p>
+<p><a href="adminwelcome.php" class="btn btn-warning">Go Back</a></p>
 <p><a href="logout.php" class="btn btn-danger">Sign Out of Your Account</a></p>
 
 </body>

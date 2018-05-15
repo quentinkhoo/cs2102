@@ -50,7 +50,9 @@ IF NEW.status := 'close' THEN
 action := 'Ride ended';
 INSERT INTO logRide(origin,dest,pickuptime,minbid,status,carid,advertiserid,action)  VALUES (OLD.origin,OLD.dest,OLD.pickuptime,OLD.minbid,OLD.status,OLD.carid,OLD.advertiserid,action);
 ELSIF TG_OP ='DELETE' THEN
-action := 'Delete ride';
+action := 'Deleted ride';
+ELSIF TG_op = 'UPDATE' THEN
+action := 'Updated Ride';
 INSERT INTO logRide(origin,dest,pickuptime,minbid,status,carid,advertiserid,action)  VALUES (OLD.origin,OLD.dest,OLD.pickuptime,OLD.minbid,OLD.status,OLD.carid,OLD.advertiserid,action);
 END IF;
 

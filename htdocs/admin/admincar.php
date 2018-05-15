@@ -1,7 +1,7 @@
 <?php
 //NOT TO BE CONFUSED WITH ADVERTISEMENTS.PHP, THIS FILE IS TO CREATE ADVERTISEMENTS
 
-require_once 'config.php';
+require_once '../config.php';
 
 session_start();
 
@@ -12,8 +12,10 @@ $model = $license = $colour = $seats = "";
 $model_err = $license_err = $colour_err = $seats_err = "";
 
 //Redirect to login page if session has not started
-if (!isset($_SESSION['userid']) || empty($_SESSION['userid'])) {
-  header("location: login.php");
+
+if(!isset($_SESSION['userid']) || empty($_SESSION['userid']) 
+  || !isset($_SESSION['isadmin']) || empty($_SESSION['isadmin'])) {
+    header("location: ../login.php");
   exit;
 } else {
   //Processing form data when form is submitted
@@ -179,7 +181,7 @@ if (!isset($_SESSION['userid']) || empty($_SESSION['userid'])) {
                 <input type="reset" class="btn btn-default" value="Reset">
             </div>
     </form>
-    <p><a href="welcome.php" class="btn btn-warning">Return to Homepage</a></p>
+    <p><a href="adminwelcome.php" class="btn btn-warning">Return to Homepage</a></p>
     <p><a href="logout.php" class="btn btn-danger">Sign Out of Your Account</a></p>
   </div>
 </body>

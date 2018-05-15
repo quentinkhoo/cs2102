@@ -1,7 +1,7 @@
 <?php
 //NOT TO BE CONFUSED WITH ADVERTISEMENTS.PHP, THIS FILE IS TO CREATE ADVERTISEMENTS
 
-require_once 'config.php';
+require_once '../config.php';
 
 session_start();
 
@@ -13,8 +13,9 @@ $minbid = 10.00;
 $origin_err = $dest_err = $pickuptime_err = $minbid_err = $license_err = "";
 
 //Redirect to login page if session has not started
-if (!isset($_SESSION['userid']) || empty($_SESSION['userid'])) {
-  header("location: login.php");
+if(!isset($_SESSION['userid']) || empty($_SESSION['userid']) 
+  || !isset($_SESSION['isadmin']) || empty($_SESSION['isadmin'])) {
+  header("location: ../login.php");
   exit;
 } else {
 	//Processing form data when form is submitted
@@ -164,7 +165,7 @@ if (!isset($_SESSION['userid']) || empty($_SESSION['userid'])) {
 
             <p>Do not have a car registered? Register one! <a href="car.php">Register a car here</a>.</p>
 		</form>
-        <p><a href="welcome.php" class="btn btn-warning">Return to Homepage</a></p>
+        <p><a href="adminwelcome.php" class="btn btn-warning">Return to Homepage</a></p>
         <p><a href="logout.php" class="btn btn-danger">Sign Out of Your Account</a></p>
 	</div>
 </body>

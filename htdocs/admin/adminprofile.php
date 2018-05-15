@@ -1,18 +1,18 @@
 
 <?php
 // Initialize the session
-require_once 'config.php';
+require_once '../config.php';
 session_start();
 
-if(!isset($_SESSION['userid']) || empty($_SESSION['userid'])) {
-  header("location: login.php");
+if(!isset($_SESSION['userid']) || empty($_SESSION['userid']) 
+  || !isset($_SESSION['isadmin']) || empty($_SESSION['isadmin'])) {
+  header("location: ../login.php");
   exit;
 }
  
  $result = pg_query($db, "SELECT * FROM Person WHERE userid = ".$_SESSION['userid']);
  if (!$result) {
   echo "An error occured. \n";
-  exit;
  }
 
 $fullname = $email = $phone = $username = $password = $confirmpassword = "";
@@ -25,7 +25,6 @@ $username = $row[username];
 $email = $row[email];
 $fullname = $row[fullname];
 $phone = $row[phone];
-
 
 if($_SERVER["REQUEST_METHOD"] == "POST"){
 
@@ -96,20 +95,24 @@ if($_SERVER["REQUEST_METHOD"] == "POST"){
   <div class="container-fluid">
       <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
       <ul class="nav navbar-nav">
-        <li class="active"><a href="welcome.php">Car Pooling <span class="sr-only">(current)</span></a></li>
-        <li><a href="updatebid.php">Bid</a></li>
-        <li><a href="updateads.php">Advertisement</a></li>
+        <li class="active"><a href="#">Car Pooling <span class="sr-only">(current)</span></a></li>
+        <li><a href="adminupdatebid.php">My Bids</a></li>
+        <li><a href="adminupdateads.php">My Advertisements</a></li>
         <li class="dropdown">
           <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Dropdown <span class="caret"></span></a>
           <ul class="dropdown-menu">
-            <li><a href="profile.php">Profile</a></li>
+            <li><a href="viewallusers.php">View All Users</a></li>
+            <li><a href="viewallads.php">View All Advertisements</a></li>
+            <li><a href="viewallbids.php">View All Bids</a></li>
+            <li><a href="adminprofile.php">Profile</a></li>
             <li><a href="logout.php">Logout</a></li>
           </ul>
         </li>
       </ul>
-    </div>
-    </div>
-  </nav>
+  </div>
+
+  </div>
+</nav>
 
 
     <div class="container">
@@ -126,7 +129,7 @@ if($_SERVER["REQUEST_METHOD"] == "POST"){
           <div class="profile-usertitle-name">
           </div>
           <div class="profile-usertitle-job">
-            User
+            Admin
           </div>
         </div>
         <!-- END SIDEBAR USER TITLE -->
@@ -136,18 +139,18 @@ if($_SERVER["REQUEST_METHOD"] == "POST"){
         <div class="profile-usermenu">
           <ul class="nav">
             <li class="active">
-              <a href="profile.php">
+              <a href="adminprofile.php">
               <i class="glyphicon glyphicon-home"></i>
               Profile </a>
               </li>
              <li class="active">
-              <a href="viewcars.php">
+              <a href="adminviewcars.php">
               <i class="glyphicon glyphicon-road"></i>
               View my Registered Cars </a>
             </li>
             </li>
              <li class="active">
-              <a href="car.php">
+              <a href="admincar.php">
               <i class="glyphicon glyphicon-road"></i>
               Register a Car </a>
             </li>

@@ -147,7 +147,7 @@ if($_SERVER["REQUEST_METHOD"] == "POST") {
     if(empty($username_err) && empty($password_err) && empty($fullname_err) && empty($email_err) && empty($phone_err) && empty($confirm_password_err)){
         $sql_update_person = "INSERT INTO person (username, password, fullname, email, phone) 
                         VALUES ($1, $2, $3, $4, $5)";
-        $password_hash = password_hash($password, PASSWORD_DEFAULT);
+        //$password_hash = password_hash($password, PASSWORD_DEFAULT);
         $prepare_update_person = pg_prepare($db, "", $sql_update_person);
     }
 
@@ -174,7 +174,7 @@ if($_SERVER["REQUEST_METHOD"] == "POST") {
                         VALUES ($1, $2, $3, $4, $5)";
         $prepare_update_person = pg_prepare($db, "", $sql_update_person);
         if ($prepare_update_person) {
-            $execute_update_person = pg_execute($db, "", array($username, $password_hash, 
+            $execute_update_person = pg_execute($db, "", array($username, $password, 
                                                                 $fullname, $email, $phone));
             if (!$execute_update_person) {
                 echo "Update person failed!!";
@@ -213,7 +213,7 @@ if($_SERVER["REQUEST_METHOD"] == "POST") {
         }
         
     } else if ($prepare_update_person && $gotcar == false) {
-        $execute_update_person = pg_execute($db, "", array($username, $password_hash, 
+        $execute_update_person = pg_execute($db, "", array($username, $password, 
                                                             $fullname, $email, $phone));
         if (!$execute_update_person) {
             echo "Update person failed!!";
@@ -301,9 +301,9 @@ if($_SERVER["REQUEST_METHOD"] == "POST") {
             <div class="form-group <?php echo (!empty($carseats_err)) ? 'has-error' : ''; ?>">
                 <label>Number of Seats </label>
                 <select name="carseats" class="form-control" value="<?php echo $carseats; ?>">
-                    <option value=""></option>
+                    <option placeholder="Select number of seats"></option>
                     <option value="2-seater">2-seater</option>
-                    <option value="4-seater">4-seater</option>
+                    <option value="5-seater">5-seater</option>
                     <option value="7-seater">7-seater</option>
                 </select>
                 <span class="help-block"><?php echo $carseats_err; ?></span>
